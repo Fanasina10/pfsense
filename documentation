@@ -1,0 +1,352 @@
+# Déploiement et sécurisation d'une infrastructure réseau avec pfSense
+
+## Présentation du projet
+
+Ce projet consiste à déployer et configurer **pfSense** comme pare-feu central d'une infrastructure réseau afin d'améliorer la sécurité, le contrôle des accès et la visibilité sur les activités réseau.
+
+L'objectif est de mettre en place une solution complète permettant :
+
+* le filtrage des flux réseau ;
+* l'authentification centralisée des utilisateurs ;
+* le contrôle de l'accès Internet ;
+* la gestion de la bande passante ;
+* la supervision du trafic réseau.
+
+L'infrastructure intègre plusieurs services complémentaires :
+
+* **Active Directory** pour la gestion des utilisateurs.
+* **NPS (Network Policy Server)** pour l'authentification RADIUS.
+* **pfSense** comme pare-feu et passerelle réseau.
+* **Squid Proxy** pour le contrôle des accès web.
+* **ntopng** pour l'analyse et la supervision du trafic.
+
+---
+
+# Objectifs du projet
+
+Les objectifs principaux sont :
+
+* Déployer pfSense comme pare-feu d'entreprise.
+* Sécuriser l'accès au réseau interne.
+* Mettre en place une authentification centralisée des utilisateurs.
+* Contrôler l'accès Internet selon des politiques de sécurité.
+* Filtrer les flux entrants et sortants.
+* Optimiser l'utilisation de la bande passante.
+* Superviser les activités réseau en temps réel.
+
+---
+
+# Architecture réseau
+
+L'architecture mise en place suit le modèle suivant :
+
+```text
+                         Internet
+
+                            |
+                            |
+                         WAN pfSense
+
+                            |
+                    +---------------+
+                    |    pfSense    |
+                    | Firewall      |
+                    +---------------+
+
+             |             |              |
+             |             |              |
+
+          LAN          Serveurs       Utilisateurs
+
+             |
+             |
+       Active Directory
+             |
+             |
+            NPS
+          (RADIUS)
+
+             |
+             |
+        Authentification
+        Portail Captif
+```
+
+---
+
+# Environnement technique
+
+## Pare-feu
+
+### pfSense
+
+Rôle :
+
+* filtrage réseau ;
+* routage entre interfaces ;
+* gestion des règles firewall ;
+* portail captif ;
+* gestion de la bande passante.
+
+---
+
+## Authentification
+
+### Active Directory
+
+Utilisé pour :
+
+* centraliser les comptes utilisateurs ;
+* gérer les groupes et permissions ;
+* appliquer des politiques d'accès.
+
+---
+
+### NPS (Network Policy Server)
+
+NPS est utilisé comme serveur RADIUS.
+
+Fonctions :
+
+* authentification des utilisateurs ;
+* validation des accès réseau ;
+* communication entre pfSense et Active Directory.
+
+Flux d'authentification :
+
+```text
+Utilisateur
+
+    |
+    |
+Portail Captif pfSense
+
+    |
+    |
+RADIUS Request
+
+    |
+    |
+NPS
+
+    |
+    |
+Active Directory
+
+    |
+    |
+Validation utilisateur
+```
+
+---
+
+# Fonctionnalités mises en place
+
+# 1. Portail captif avec authentification RADIUS
+
+Un portail captif est configuré afin de contrôler l'accès au réseau.
+
+Lorsqu'un utilisateur tente d'accéder à Internet :
+
+1. Il est redirigé vers la page d'authentification.
+2. Ses identifiants sont envoyés au serveur NPS.
+3. NPS vérifie les informations dans Active Directory.
+4. L'accès réseau est autorisé ou refusé.
+
+Avantages :
+
+* contrôle des utilisateurs connectés ;
+* authentification centralisée ;
+* traçabilité des connexions.
+
+---
+
+# 2. Configuration des règles pare-feu
+
+Des règles de filtrage sont mises en place afin de contrôler les communications réseau.
+
+Exemples :
+
+* autoriser certains flux nécessaires ;
+* bloquer les connexions non autorisées ;
+* limiter certains accès externes ;
+* sécuriser les communications entre réseaux.
+
+Principe :
+
+```text
+Source → Destination → Port → Action
+
+LAN → Internet → HTTPS → Autorisé
+
+LAN → Serveur interdit → Bloqué
+```
+
+---
+
+# 3. Gestion de la bande passante
+
+La gestion du trafic permet d'optimiser l'utilisation des ressources réseau.
+
+Objectifs :
+
+* éviter qu'un utilisateur monopolise la connexion ;
+* garantir une meilleure qualité de service ;
+* appliquer des priorités selon les besoins.
+
+Fonctionnalités :
+
+* limitation du débit ;
+* priorisation des flux ;
+* contrôle de l'utilisation réseau.
+
+---
+
+# 4. Contrôle des accès Internet avec Squid Proxy
+
+Squid Proxy est utilisé pour appliquer des politiques d'accès web.
+
+Fonctions :
+
+* filtrage des sites web ;
+* blocage de domaines ;
+* contrôle des catégories de contenu ;
+* journalisation des accès Internet.
+
+Exemple :
+
+```text
+Utilisateur
+
+    |
+    |
+Squid Proxy
+
+    |
+    |
+Internet
+
+
+Site autorisé  → Accès
+
+Site bloqué    → Refus
+```
+
+---
+
+# 5. Supervision du trafic avec ntopng
+
+ntopng permet d'obtenir une visibilité sur l'activité réseau.
+
+Informations collectées :
+
+* utilisateurs connectés ;
+* connexions actives ;
+* consommation de bande passante ;
+* protocoles utilisés ;
+* applications réseau.
+
+Objectifs :
+
+* détecter les comportements anormaux ;
+* analyser l'utilisation réseau ;
+* faciliter le diagnostic.
+
+---
+
+# Scénarios de tests réalisés
+
+## Test 1 : Authentification utilisateur
+
+Étapes :
+
+1. Connexion d'un utilisateur au réseau.
+2. Redirection vers le portail captif.
+3. Saisie des identifiants Active Directory.
+4. Validation par NPS.
+
+Résultat :
+
+L'utilisateur authentifié obtient l'accès réseau.
+
+---
+
+## Test 2 : Blocage d'un site web
+
+Étapes :
+
+1. Ajout d'un domaine dans la liste noire Squid.
+2. Tentative d'accès depuis un poste utilisateur.
+
+Résultat :
+
+L'accès au domaine est refusé.
+
+---
+
+## Test 3 : Application des règles firewall
+
+Étapes :
+
+1. Création d'une règle de filtrage.
+2. Génération d'un trafic correspondant.
+
+Résultat :
+
+Le trafic est correctement autorisé ou bloqué selon la politique définie.
+
+---
+
+## Test 4 : Analyse du trafic réseau
+
+Avec ntopng :
+
+* observation des connexions actives ;
+* analyse de la consommation réseau ;
+* identification des principaux utilisateurs de bande passante.
+
+---
+
+# Résultats obtenus
+
+Ce projet a permis de mettre en place une solution complète de sécurité réseau comprenant :
+
+* un pare-feu d'entreprise basé sur pfSense ;
+* une authentification centralisée avec Active Directory et RADIUS ;
+* un contrôle d'accès réseau via portail captif ;
+* un filtrage Internet avec Squid Proxy ;
+* une gestion de la bande passante ;
+* une supervision du trafic avec ntopng.
+
+---
+
+# Compétences développées
+
+* Administration réseau
+* Configuration firewall
+* pfSense
+* VLAN et segmentation réseau
+* Authentification RADIUS
+* Active Directory
+* NPS
+* Proxy Squid
+* Supervision réseau
+* Analyse du trafic
+* Sécurité périmétrique
+
+---
+
+# Améliorations possibles
+
+* Ajouter une segmentation réseau avec VLAN.
+* Mettre en place une haute disponibilité pfSense (CARP).
+* Ajouter une solution IDS/IPS avec Suricata.
+* Centraliser les logs avec un SIEM comme Wazuh.
+
+---
+
+# Conclusion
+
+Ce projet a permis de déployer une solution complète de sécurité réseau basée sur pfSense.
+
+L'intégration du pare-feu, de l'authentification centralisée, du proxy web et de la supervision réseau permet d'obtenir une infrastructure mieux contrôlée, sécurisée et adaptée aux besoins d'une organisation.
